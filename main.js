@@ -25,7 +25,18 @@ const servers = {
             urls:['stun:stun1.l.google.com:19302','stun:stun2.l.google.com:19302']
         }
     ]
-}  
+} 
+
+let constraints ={
+    video:{
+        width:{min:640,ideal:1920,max:1920},
+        height:{
+            min:480,ideal:1080,max:1080
+        },
+    },
+    audio:true
+}
+
 
 let init = async ()=>{
     client = await AgoraRTM.createInstance(APP_ID)
@@ -40,12 +51,14 @@ let init = async ()=>{
 
     client.on('MessageFromPeer',handleMessageFromPeer)
 
-    localStream = await navigator.mediaDevices.getUserMedia({video:true,audio:false})
+    localStream = await navigator.mediaDevices.getUserMedia(constraints)
     document.getElementById('user1').srcObject = localStream
     
 }
 let handleUserLeft = (MemberId)=>{
     document.getElementById('user2').style.display = 'none'
+    document.getElementById('user1').classList.remove('smallForm')
+
 }
 
 // let handleMessageFromPeer = async (message,MemberId)=>{
@@ -87,6 +100,7 @@ let createPeerConnection = async (MemberId)=>{
     remoteStream = new MediaStream()
     document.getElementById('user2').srcObject = remoteStream
     document.getElementById('user2').style.display = 'block'
+    document.getElementById('user1').classList.add('smallForm')
 
 
     localStream.getTracks().forEach((track) => {
@@ -143,5 +157,28 @@ let leaveChannel = async ()=>{
     await client.logout()
 
 }
+
+let toggleCamera = async ()=>{
+    let videoTrack = localStream.getTracks().find(track => track.kind ==='video')
+    if(videoTrack.enabled){
+        videoTrack.enabled=false
+        document.getElementById('camera_btn').style.backgroundColor = 'rgb(225,88,80)';
+        }else{
+            videoTrack.enabled=true
+        document.getElementById('camera_btn').style.backgroundColor = 'rgb(179,102,249,.9)';
+        }
+}   
+let toggleAudio = async ()=>{
+    let audioTrack = localStream.getTracks().find(track => track.kind ==='audio')
+    if(audioTrack.enabled){
+        audioTrack.enabled=false
+        document.getElementById('mic_btn').style.backgroundColor = 'rgb(225,88,80)';
+        }else{
+            audioTrack.enabled=true
+        document.getElementById('mic_btn').style.backgroundColor = 'rgb(179,102,249,.9)';
+        }
+}
 window.addEventListener('beforeunload',leaveChannel); 
+document.getElementById('camera_btn').addEventListener('click',toggleCamera)
+document.getElementById('mic_btn').addEventListener('click',toggleAudio)
 init();
